@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { useRouter, useLocalSearchParams, Stack } from "expo-router";
 import {
   Company,
   JobAbout,
@@ -13,12 +14,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ScrollView } from "react-native";
 
 const JobDetails = () => {
-  const params = useSearchParams();
+  const params = useLocalSearchParams();
   const router = useRouter();
 
   const { data, isLoading, error, refetch } = useFetch("job-details", {
     job_id: params.id,
   });
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = () => {};
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.lightWhite }}>
@@ -42,15 +46,30 @@ const JobDetails = () => {
       />
 
       <>
-        <ScrollView showsVerticalScrollIndicator={false} refreshControl={}></ScrollView> 
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          {isLoading ? (
+            <ActivityIndicator size="large" color={COLORS.primary} />
+          ) : error ? (
+            <Text>Something went wrong</Text>
+          ) : data.length === 0 ? (
+            <Text>No data available</Text>
+          ) : (
+            <View style={{ padding: SIZES.medium, paddingBottom: 100 }}>
+              <Company
+                companyLogo={data[0].employer_logo}
+                jobTitle={data[0].job_title}
+                companyName={data[0].employer_name}
+                location={data[0].job_country}
+              />
+            </View>
+          )}
+        </ScrollView>
       </>
-      <Company
-        companyLogo={data?.employer_logo}
-        jobTitle={data?.job_title}
-        companyName={data?.employer_name}
-        location={data?.job_country}
-        jobDescription={data?.job_description}
-      />
       <JobTabs />
       <Specifics />
       <JobAbout />
